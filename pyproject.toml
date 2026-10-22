@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "studybuddy"
+version = "1.0.0"
+description = "AI Study Buddy: a Mistral-powered tutor that explains, coaches homework, quizzes and makes flashcards"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "httpx>=0.27", "pydantic>=2.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5", "playwright>=1.40"]
+
+[tool.setuptools.packages.find]
+include = ["studybuddy*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+"studybuddy/prompts.py" = ["E501"]

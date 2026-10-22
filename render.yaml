@@ -1,0 +1,14 @@
+# One-click deploy on Render (free web service): New > Blueprint > pick this repository.
+services:
+  - type: web
+    name: ai-study-buddy
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: MISTRAL_API_KEY
+        sync: false   # paste the key in the Render dashboard; it is never stored in the repository
+      - key: MISTRAL_MODEL
+        value: mistral-small-latest
+      - key: REQUESTS_PER_MINUTE
+        value: "12"

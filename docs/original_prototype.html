@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Buddy - Your Personal Tutor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .chat-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .quick-actions {
+            background: #f8f9fa;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .quick-btn {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin-right: 12px;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #ffa726, #fb8c00);
+            margin-left: 12px;
+            order: 2;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+            word-wrap: break-word;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .quiz-container {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .quiz-question {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #856404;
+        }
+
+        .quiz-option {
+            background: white;
+            border: 2px solid #e1e8ed;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quiz-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .quiz-option.correct {
+            border-color: #4ade80;
+            background: #dcfce7;
+        }
+
+        .quiz-option.incorrect {
+            border-color: #f87171;
+            background: #fee2e2;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px 20px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            width: fit-content;
+        }
+
+        .typing-indicator.show {
+            display: block;
+        }
+
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .chat-input-area {
+            background: white;
+            padding: 20px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .features-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .features-info h4 {
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .features-info ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .features-info li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🎓 AI Study Buddy</h1>
+            <p>Your Personal AI Tutor - Ask Questions, Get Quizzes, Learn Better!</p>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Online</span>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="quickAction('quiz')">📝 Generate Quiz</button>
+            <button class="quick-btn" onclick="quickAction('explain')">💡 Explain Concept</button>
+            <button class="quick-btn" onclick="quickAction('homework')">📚 Homework Help</button>
+            <button class="quick-btn" onclick="quickAction('tips')">🎯 Study Tips</button>
+            <button class="quick-btn" onclick="quickAction('summarize')">📄 Summarize Topic</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <strong>Hello! I'm your AI Study Buddy! 👋</strong>
+                    <div class="features-info">
+                        <h4>I can help you with:</h4>
+                        <ul>
+                            <li>📝 <strong>Create quizzes</strong> on any topic</li>
+                            <li>💡 <strong>Explain concepts</strong> in simple terms</li>
+                            <li>✍️ <strong>Help with homework</strong> step-by-step</li>
+                            <li>📚 <strong>Study tips</strong> and learning strategies</li>
+                            <li>🎯 <strong>Test preparation</strong> and practice questions</li>
+                        </ul>
+                    </div>
+                    What would you like to study today?
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="userInput" 
+                    placeholder="Ask me anything... (e.g., 'Quiz me on photosynthesis' or 'Explain Newton's laws')"
+                    onkeypress="handleKeyPress(event)"
+                />
+                <button class="send-btn" onclick="sendMessage()">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AIStudyBuddy {
+            constructor() {
+                this.conversationHistory = [];
+                this.currentQuiz = null;
+            }
+
+            async processMessage(userMessage) {
+                // Add delay to simulate thinking
+                await this.delay(1500);
+
+                const messageLower = userMessage.toLowerCase();
+
+                // Detect intent
+                if (messageLower.includes('quiz') || messageLower.includes('test me')) {
+                    return this.generateQuiz(userMessage);
+                } else if (messageLower.includes('explain') || messageLower.includes('what is')) {
+                    return this.explainConcept(userMessage);
+                } else if (messageLower.includes('homework') || messageLower.includes('help me')) {
+                    return this.helpWithHomework(userMessage);
+                } else if (messageLower.includes('study tip') || messageLower.includes('how to study')) {
+                    return this.giveStudyTips();
+                } else if (messageLower.includes('summarize')) {
+                    return this.summarizeTopic(userMessage);
+                } else {
+                    return this.generalResponse(userMessage);
+                }
+            }
+
+            generateQuiz(topic) {
+                // Extract topic from message
+                const topicName = this.extractTopic(topic);
+                
+                const quizzes = {
+                    'math': {
+                        question: "What is 15 × 12?",
+                        options: ["150", "180", "175", "160"],
+                        correct: 1
+                    },
+                    'science': {
+                        question: "What is the process by which plants make food?",
+                        options: ["Respiration", "Photosynthesis", "Digestion", "Fermentation"],
+                        correct: 1
+                    },
+                    'history': {
+                        question: "In which year did World War II end?",
+                        options: ["1943", "1944", "1945", "1946"],
+                        correct: 2
+                    },
+                    'english': {
+                        question: "What is a synonym for 'happy'?",
+                        options: ["Sad", "Joyful", "Angry", "Tired"],
+                        correct: 1
+                    },
+                    'default': {
+                        question: "What does 'AI' stand for?",
+                        options: ["Artificial Intelligence", "Automated Information", "Advanced Integration", "Applied Innovation"],
+                        correct: 0
+                    }
+                };
+
+                const selectedQuiz = quizzes[topicName] || quizzes['default'];
+                this.currentQuiz = selectedQuiz;
+
+                return {
+                    type: 'quiz',
+                    content: `📝 <strong>Quiz Time!</strong><br><br>Here's a question about ${topicName}:`,
+                    quiz: selectedQuiz
+                };
+            }
+
+            explainConcept(message) {
+                const explanations = {
+                    'photosynthesis': `
+                        🌱 <strong>Photosynthesis Explained:</strong><br><br>
+                        Photosynthesis is how plants make their own food!<br><br>
+                        <strong>Simple Steps:</strong><br>
+                        1. 🌞 Plants absorb <strong>sunlight</strong><br>
+                        2. 💧 They take in <strong>water</strong> from roots<br>
+                        3. 🌫️ They absorb <strong>CO₂</strong> from air<br>
+                        4. 🍃 They produce <strong>glucose</strong> (food) and <strong>oxygen</strong><br><br>
+                        <strong>Formula:</strong> 6CO₂ + 6H₂O + Light → C₆H₁₂O₆ + 6O₂<br><br>
+                        Think of it like: Plants are nature's food factories! 🏭🌿
+                    `,
+                    'gravity': `
+                        🌍 <strong>Gravity Explained:</strong><br><br>
+                        Gravity is an invisible force that pulls objects toward each other!<br><br>
+                        <strong>Key Points:</strong><br>
+                        • 🍎 Makes things fall down (like Newton's apple)<br>
+                        • 🌙 Keeps the Moon orbiting Earth<br>
+                        • ⚖️ Stronger for heavier objects<br>
+                        • 📏 Weaker when objects are farther apart<br><br>
+                        <strong>Fun Fact:</strong> You weigh less on the Moon because it has less gravity! 🚀
+                    `,
+                    'default': `
+                        💡 <strong>Here's what I understand:</strong><br><br>
+                        You want to learn about a topic! I'd love to explain it, but I need more details.<br><br>
+                        Try asking: "Explain photosynthesis" or "What is gravity?"<br><br>
+                        I can explain concepts in simple terms with examples! 📚
+                    `
+                };
+
+                const topic = this.extractTopic(message);
+                const explanation = explanations[topic] || explanations['default'];
+
+                return {
+                    type: 'text',
+                    content: explanation
+                };
+            }
+
+            helpWithHomework(message) {
+                return {
+                    type: 'text',
+                    content: `
+                        ✍️ <strong>Homework Help Mode Activated!</strong><br><br>
+                        I'm here to guide you step-by-step! Here's how I can help:<br><br>
+                        <strong>1. Share your problem:</strong><br>
+                        Tell me what subject and what you're stuck on<br><br>
+                        <strong>2. I'll break it down:</strong><br>
+                        • Show you the steps<br>
+                        • Explain the concepts<br>
+                        • Give you similar examples<br><br>
+                        <strong>3. You practice:</strong><br>
+                        I'll give you practice problems to master it!<br><br>
+                        💡 <em>Remember: I help you understand, not just give answers!</em><br><br>
+                        What homework problem are you working on?
+                    `
+                };
+            }
+
+            giveStudyTips() {
+                const tips = [
+                    `
+                        🎯 <strong>Effective Study Tips:</strong><br><br>
+                        <strong>1. Pomodoro Technique 🍅</strong><br>
+                        • Study 25 minutes<br>
+                        • Break 5 minutes<br>
+                        • Repeat 4 times<br>
+                        • Take longer break (15-30 min)<br><br>
+                        <strong>2. Active Recall 🧠</strong><br>
+                        • Close your book<br>
+                        • Try to remember what you learned<br>
+                        • Check what you got right<br><br>
+                        <strong>3. Teach Others 👥</strong><br>
+                        • Explain concepts to friends<br>
+                        • If you can teach it, you know it!<br><br>
+                        Want more tips? Just ask! 📚
+                    `
+                ];
+
+                return {
+                    type: 'text',
+                    content: tips[0]
+                };
+            }
+
+            summarizeTopic(message) {
+                return {
+                    type: 'text',
+                    content: `
+                        📄 <strong>Topic Summary:</strong><br><br>
+                        I can create concise summaries of any topic!<br><br>
+                        <strong>I'll include:</strong><br>
+                        • Key points and main ideas<br>
+                        • Important terms and definitions<br>
+                        • Easy-to-remember examples<br>
+                        • Quick review questions<br><br>
+                        What topic would you like me to summarize?<br>
+                        (e.g., "Summarize the Water Cycle" or "Summarize World War 2")
+                    `
+                };
+            }
+
+            generalResponse(message) {
+                const responses = [
+                    `
+                        I understand you're asking about that! Let me help you learn it properly. 🎓<br><br>
+                        Could you be more specific? For example:<br>
+                        • "Quiz me on [topic]"<br>
+                        • "Explain [concept]"<br>
+                        • "Help me with [homework problem]"<br>
+                        • "Give me study tips"<br><br>
+                        I'm here to make learning easier! 💪
+                    `,
+                    `
+                        Great question! 🤔 I want to give you the best answer possible.<br><br>
+                        Could you tell me:<br>
+                        • What subject is this for?<br>
+                        • What specifically do you want to know?<br>
+                        • Is this for homework or test prep?<br><br>
+                        The more details you give, the better I can help! 📚
+                    `
+                ];
+
+                return {
+                    type: 'text',
+                    content: responses[Math.floor(Math.random() * responses.length)]
+                };
+            }
+
+            extractTopic(message) {
+                const topics = ['math', 'science', 'history', 'english', 'photosynthesis', 'gravity'];
+                const messageLower = message.toLowerCase();
+                
+                for (let topic of topics) {
+                    if (messageLower.includes(topic)) {
+                        return topic;
+                    }
+                }
+                return 'default';
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Initialize Study Buddy
+        const studyBuddy = new AIStudyBuddy();
+        let messageCount = 0;
+
+        function addMessage(sender, content, quiz = null) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = sender === 'bot' ? '🤖' : '👤';
+            
+            let messageHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    ${content}
+                </div>
+            `;
+
+            messageDiv.innerHTML = messageHTML;
+            messagesContainer.appendChild(messageDiv);
+
+            // If it's a quiz, add quiz elements
+            if (quiz) {
+                const quizDiv = document.createElement('div');
+                quizDiv.className = 'message bot';
+                quizDiv.innerHTML = `
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="quiz-container">
+                            <div class="quiz-question">${quiz.question}</div>
+                            ${quiz.options.map((option, index) => `
+                                <div class="quiz-option" onclick="checkAnswer(${index}, ${quiz.correct})">
+                                    ${String.fromCharCode(65 + index)}. ${option}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                messagesContainer.appendChild(quizDiv);
+            }
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typingIndicator';
+            typingDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="typing-indicator show">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </div>
+            `;
+            messagesContainer.appendChild(typingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Get AI response
+            const response = await studyBuddy.processMessage(message);
+            
+            // Remove typing indicator
+            removeTypingIndicator();
+
+            // Add bot response
+            if (response.type === 'quiz') {
+                addMessage('bot', response.content);
+                addMessage('bot', '', response.quiz);
+            } else {
+                addMessage('bot', response.content);
+            }
+        }
+
+        function checkAnswer(selected, correct) {
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach((option, index) => {
+                option.style.pointerEvents = 'none';
+                if (index === correct) {
+                    option.classList.add('correct');
+                } else if (index === selected && selected !== correct) {
+                    option.classList.add('incorrect');
+                }
+            });
+
+            setTimeout(() => {
+                if (selected === correct) {
+                    addMessage('bot', '🎉 <strong>Correct!</strong> Great job! You got it right! 🌟<br><br>Want another question? Just ask!');
+                } else {
+                    addMessage('bot', `❌ Not quite! The correct answer was <strong>${String.fromCharCode(65 + correct)}</strong>.<br><br>Don't worry, learning from mistakes helps you remember better! Want to try another question? 💪`);
+                }
+            }, 1000);
+        }
+
+        function quickAction(action) {
+            const actions = {
+                'quiz': 'Generate a quiz on science',
+                'explain': 'Explain photosynthesis to me',
+                'homework': 'I need help with my homework',
+                'tips': 'Give me study tips',
+                'summarize': 'Summarize a topic for me'
+            };
+
+            document.getElementById('userInput').value = actions[action];
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Auto-scroll to bottom
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    </script>
+</body>
+</html>
